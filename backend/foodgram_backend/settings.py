@@ -30,8 +30,6 @@ INSTALLED_APPS = [
     'recipes.apps.RecipesConfig',
 ]
 
-INSTALLED_APPS += ('django_extensions',)
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -41,6 +39,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+
+if DEBUG:
+    MIDDLEWARE += ('silk.middleware.SilkyMiddleware',)
+    INSTALLED_APPS += ('django_extensions', 'silk',)
 
 ROOT_URLCONF = 'foodgram_backend.urls'
 
@@ -67,7 +70,8 @@ DJOSER = {
 
     },
     'PERMISSIONS': {
-        'user': ['rest_framework.permissions.IsAuthenticated'],
+        'user': ['api.permissions.CurrentUserOrAdminOrReadOnly'],
+        'user_list': ['api.permissions.ReadOnly'],
     },
     'HIDE_USERS': False
 }
@@ -83,8 +87,6 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 10,
 }
 
 
@@ -136,6 +138,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'static'
 
 
 MEDIA_URL = '/media/'

@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from .constants import SHORT_TITLE, STANDART_FIELD_LENGTH
-from .validators import username_validator
+from .validators import name_validator, username_validator
 
 
 class User(AbstractUser):
@@ -10,7 +10,7 @@ class User(AbstractUser):
                               verbose_name='Эл. почта')
     username = models.CharField(max_length=STANDART_FIELD_LENGTH,
                                 verbose_name='Никнейм', unique=True,
-                                validators=[username_validator])
+                                validators=[username_validator,])
     first_name = models.CharField(max_length=STANDART_FIELD_LENGTH,
                                   verbose_name='Имя')
     last_name = models.CharField(max_length=STANDART_FIELD_LENGTH,
@@ -30,7 +30,8 @@ class User(AbstractUser):
 
 class NameModel(models.Model):
     name = models.CharField(max_length=STANDART_FIELD_LENGTH,
-                            verbose_name='Наименование', db_index=True)
+                            verbose_name='Наименование', db_index=True,
+                            validators=[name_validator,])
 
     class Meta:
         abstract = True
@@ -73,10 +74,9 @@ class Recipe(NameModel):
     )
     author = models.ForeignKey(
         User,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         related_name='recipes',
         verbose_name='Автор',
-        null=True
     )
     ingredients = models.ManyToManyField(
         Ingredient,
@@ -88,7 +88,7 @@ class Recipe(NameModel):
         upload_to='reicpes/media/',
         verbose_name='Изображение',
     )
-    text = models.TextField(verbose_name='Текст',)
+    text = models.TextField(verbose_name='Текст', blank=False)
     cooking_time = models.IntegerField(verbose_name='Время приготовления')
 
     class Meta:
@@ -106,7 +106,7 @@ class Subscribe(models.Model):
     follower = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Подписчики',
+        verbose_name='Подписчик',
     )
 
     def __str__(self):
@@ -117,7 +117,11 @@ class Subscribe(models.Model):
         verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'follower'], name='user-follower')
+                fields=['user', 'follower'], name='user-follower'),
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('follower')),
+                name='user_cannot_be_follower',
+            )
         ]
 
 
@@ -136,6 +140,9 @@ class InShoppingCart(RecipeForeignModel):
             models.UniqueConstraint(
                 fields=['user', 'recipe'], name='user-shopping_cart')
         ]
+
+    def __str__(self):
+        return self.recipe.name
 
 
 class Favorites(RecipeForeignModel):
