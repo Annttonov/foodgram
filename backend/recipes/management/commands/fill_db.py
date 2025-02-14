@@ -5,6 +5,7 @@ import sys
 import django
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
+
 from recipes.models import Ingredient
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'foodgram_backend.settings')

@@ -126,7 +126,7 @@ class SpecialUserViewSet(UserViewSet):
             except IntegrityError as e:
                 if 'UNIQUE constraint failed:' in str(e):
                     raise ValidationError(
-                        'невозможно добвать один рецепт дважды')
+                        'Невозможно добвать один рецепт дважды')
                 else:
                     raise e
             obj.is_subscribed = True
@@ -207,7 +207,7 @@ class RecipeViewSet(ModelViewSet):
             except IntegrityError as e:
                 if 'UNIQUE constraint failed:' in str(e):
                     raise ValidationError(
-                        'невозможно добвать один рецепт дважды')
+                        'Невозможно добвать один рецепт дважды')
                 else:
                     raise e
             serializer = serializers.ShortRecipeSerializer(recipe)
@@ -216,7 +216,7 @@ class RecipeViewSet(ModelViewSet):
                 status=status.HTTP_201_CREATED)
         if not Model.objects.filter(recipe=recipe,
                                     user=user).exists():
-            raise ValidationError(f'такой рецепт не добавлен в {list_name}')
+            raise ValidationError(f'Такой рецепт не добавлен в {list_name}')
         obj = get_object_or_404(
             Model,
             recipe=recipe,

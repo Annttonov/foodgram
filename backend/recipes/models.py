@@ -26,6 +26,8 @@ class User(AbstractUser):
 
     class Meta:
         unique_together = ('username', 'email')
+        verbose_name = 'пользователь'
+        verbose_name_plural = 'пользователи'
 
 
 class NameModel(models.Model):
@@ -51,6 +53,9 @@ class RecipeForeignModel(models.Model):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return self.recipe.name[:SHORT_TITLE]
+
 
 class Ingredient(NameModel):
     measurement_unit = models.CharField(max_length=STANDART_FIELD_LENGTH,
@@ -63,6 +68,10 @@ class Ingredient(NameModel):
 
 class Tag(NameModel):
     slug = models.SlugField(unique=True)
+
+    class Meta:
+        verbose_name = 'Тэг'
+        verbose_name_plural = 'Тэги'
 
 
 class Recipe(NameModel):
@@ -106,14 +115,14 @@ class Subscribe(models.Model):
     follower = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Подписчик',
+        verbose_name='Подписка',
     )
 
     def __str__(self):
         return self.follower.username
 
     class Meta:
-        verbose_name = 'Подписки'
+        verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
