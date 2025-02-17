@@ -1,10 +1,11 @@
+from http import HTTPStatus
+
 import pytest
 
 from recipes.models import Subscribe
 
-from http import HTTPStatus
-
 URL_TEMPLATE = '/api/users/'
+
 
 @pytest.mark.django_db(transaction=True)
 class TestUsers:
@@ -90,7 +91,8 @@ class TestUsers:
         [
             (pytest.lazy_fixture("user_client"), HTTPStatus.NO_CONTENT),
             (pytest.lazy_fixture("admin_client"), HTTPStatus.NO_CONTENT),
-            (pytest.lazy_fixture("user_superuser_client"), HTTPStatus.NO_CONTENT),
+            (pytest.lazy_fixture("user_superuser_client"),
+             HTTPStatus.NO_CONTENT),
             (pytest.lazy_fixture("anonymus_client"), HTTPStatus.UNAUTHORIZED),
         ],
     )
@@ -133,7 +135,8 @@ class TestAvatar:
         [
             (pytest.lazy_fixture("user_client"), HTTPStatus.NO_CONTENT),
             (pytest.lazy_fixture("admin_client"), HTTPStatus.NO_CONTENT),
-            (pytest.lazy_fixture("user_superuser_client"), HTTPStatus.NO_CONTENT),
+            (pytest.lazy_fixture("user_superuser_client"),
+             HTTPStatus.NO_CONTENT),
             (pytest.lazy_fixture("anonymus_client"), HTTPStatus.UNAUTHORIZED),
         ],
     )

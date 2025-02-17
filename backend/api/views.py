@@ -266,6 +266,7 @@ class RecipeViewSet(ModelViewSet):
     def get_link(self, request, *args, **kwargs):
         url = self.request.get_raw_uri().split('/')
         url.pop(-2)
+        url.pop(-4)
         url = str.join('/', url)
         url_data = {"short-link": url}
         return Response(url_data, status=status.HTTP_200_OK)

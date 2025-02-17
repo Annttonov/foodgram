@@ -1,6 +1,7 @@
+from http import HTTPStatus
+
 import pytest
 
-from http import HTTPStatus
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures('create_ingredients')

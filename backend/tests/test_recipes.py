@@ -1,11 +1,9 @@
-import pytest
-
-from rest_framework.test import APIClient
-from recipes.models import Recipe, Favorites, InShoppingCart
-from django.http import FileResponse
-
 from http import HTTPStatus
 
+import pytest
+from django.http import FileResponse
+
+from recipes.models import Favorites, InShoppingCart, Recipe
 
 URL_TEMPLATE = '/api/recipes'
 
@@ -103,7 +101,8 @@ class TestRecipes:
         assert response.status_code == expected_status
 
         if expected_status == HTTPStatus.CREATED:
-            response = client_fixture.post(f'{URL_TEMPLATE}/', self.invalid_data)
+            response = client_fixture.post(
+                f'{URL_TEMPLATE}/', self.invalid_data)
             assert response.status_code == HTTPStatus.BAD_REQUEST
 
     @pytest.mark.parametrize(
@@ -152,7 +151,8 @@ class TestRecipes:
         [
             (pytest.lazy_fixture("user_client"), HTTPStatus.NO_CONTENT),
             (pytest.lazy_fixture("admin_client"), HTTPStatus.NO_CONTENT),
-            (pytest.lazy_fixture("user_superuser_client"), HTTPStatus.NO_CONTENT),
+            (pytest.lazy_fixture("user_superuser_client"),
+             HTTPStatus.NO_CONTENT),
             (pytest.lazy_fixture("client"), HTTPStatus.UNAUTHORIZED),
         ],
     )
@@ -171,13 +171,14 @@ class TestRecipes:
         self.test_create_recipe(user_client, HTTPStatus.CREATED)
         response = client_fixture.get(f'{URL_TEMPLATE}/1/get-link/')
         assert response.status_code == HTTPStatus.OK
-        assert '/api/recipes/1/' in response.json()["short-link"]
-        assert 'get-link/' not in response.json()["short-link"]
+        assert '/recipes/1/' in response.json()["short-link"]
+        assert 'get-link' not in response.json()["short-link"].split('/')
+        assert 'api' not in response.json()["short-link"].split('/')
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures('create_tags', 'create_ingredients')
-class TestFavorite:
+class TestFavoriteAndShoppingCart:
 
     @pytest.fixture
     def create_recipe(self, user):
@@ -238,10 +239,9 @@ class TestFavorite:
             self, client_fixture, expected_status, model, url, user):
         model.objects.create(user=user, recipe_id=1)
         response = client_fixture.delete(f'{URL_TEMPLATE}/1/{url}/')
-        count_objs_in_db = 1 if expected_status == HTTPStatus.UNAUTHORIZED else 0
-        print(count_objs_in_db)
+        count_objects = 1 if expected_status == HTTPStatus.UNAUTHORIZED else 0
         assert response.status_code == expected_status
-        assert model.objects.all().count() == count_objs_in_db
+        assert model.objects.all().count() == count_objects
 
     @pytest.mark.parametrize(
         "client_fixture, expected_status",
@@ -253,7 +253,8 @@ class TestFavorite:
     def test_download_shopping_cart(self, user_client,
                                     client_fixture, expected_status, user):
         InShoppingCart.objects.create(user=user, recipe_id=1)
-        response = client_fixture.get(f'{URL_TEMPLATE}/download_shopping_cart/')
+        response = client_fixture.get(
+            f'{URL_TEMPLATE}/download_shopping_cart/')
         assert response.status_code == expected_status
         if expected_status == HTTPStatus.OK:
             assert type(response) is FileResponse

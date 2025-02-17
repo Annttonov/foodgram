@@ -102,7 +102,6 @@ def has_permission(request):
                  or request.user.is_superuser))
 
 
-
 admin.site.unregister(Group)
 admin.site.unregister(TokenProxy)
 admin.site.has_permission = has_permission

@@ -42,8 +42,7 @@ MIDDLEWARE = [
 
 
 if DEBUG:
-    MIDDLEWARE += ('silk.middleware.SilkyMiddleware',)
-    INSTALLED_APPS += ('django_extensions', 'silk',)
+    INSTALLED_APPS += ('django_extensions',)
 
 ROOT_URLCONF = 'foodgram_backend.urls'
 
@@ -98,8 +97,12 @@ WSGI_APPLICATION = 'foodgram_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'django'),
+        'USER': os.getenv('POSTGRES_USER', 'django'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', 5432),
     }
 }
 
