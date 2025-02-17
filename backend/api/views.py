@@ -41,6 +41,7 @@ class TagViewSet(ReadOnlyModelViewSet):
 
 class SpecialUserViewSet(UserViewSet):
     pagination_class = PageNumberCustomPaginator
+    queryset = User.objects.all().order_by('username')
 
     def get_permissions(self):
         if 'users/me/' in self.request.path:
@@ -49,8 +50,8 @@ class SpecialUserViewSet(UserViewSet):
 
     def get_queryset(self):
         if isinstance(self.request.user, AnonymousUser):
-            return User.objects.all()
-        queryset = User.objects.all().annotate(
+            return super().get_queryset()
+        queryset = super().get_queryset().annotate(
             is_subscribed=Exists(Subquery(
                 models.Subscribe.objects.filter(
                     user=self.request.user,
@@ -151,7 +152,7 @@ class SpecialUserViewSet(UserViewSet):
 class RecipeViewSet(ModelViewSet):
     queryset = models.Recipe.objects.prefetch_related(
         'ingredientrecipe_set', 'tags', 'ingredientrecipe_set__ingredient'
-    ).select_related('author')
+    ).select_related('author').order_by('-pk')
     serializer_class = serializers.RecipeSerializer
     http_method_names = ['get', 'post', 'patch', 'delete']
     pagination_class = PageNumberCustomPaginator
@@ -225,8 +226,11 @@ class RecipeViewSet(ModelViewSet):
         obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=('get',))
+    @action(detail=False, methods=('get',),
+            permission_classes=(
+        permissions.IsAuthenticated,))
     def download_shopping_cart(self, request, *args, **kwargs):
+        self.check_permissions(request)
         ingredients = models.InShoppingCart.objects.filter(
             user=request.user).select_related(
                 'recipe').prefetch_related(
@@ -243,7 +247,7 @@ class RecipeViewSet(ModelViewSet):
                 rows[str(id)][-1] += ingredient[-1]
             else:
                 rows[str(id)] = ingredient
-        with open('media/shopping_cart/test.csv', 'w',
+        with open('foodgram_media/shopping_cart.csv', 'w',
                   newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             header = ('id', 'ingredient_name', 'measurement_unit', 'amount')
@@ -251,9 +255,9 @@ class RecipeViewSet(ModelViewSet):
             for row in rows.values():
                 writer.writerow(row)
         return FileResponse(
-            open('media/shopping_cart/test.csv', 'rb'),
+            open('foodgram_media/shopping_cart.csv', 'rb'),
             as_attachment=True,
-            filename='test.csv'
+            filename='shopping_cart.csv'
         )
 
     @action(detail=True, methods=('get',),

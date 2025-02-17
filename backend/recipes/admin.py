@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
-from django.db.models import Count, F, IntegerField, OuterRef, Subquery, Value
+from django.db.models import Count, F
 from rest_framework.authtoken.models import TokenProxy
 
 from .constants import SHORT_TITLE
@@ -96,16 +96,17 @@ class TagAdmin(CustomModelAdmin):
     list_display_links = ('slug', 'name')
 
 
-
-
-
-
-
+def has_permission(request):
+    return (request.user.is_active
+            and (request.user.is_staff
+                 or request.user.is_superuser))
 
 
 
 admin.site.unregister(Group)
 admin.site.unregister(TokenProxy)
+admin.site.has_permission = has_permission
+admin.site.check
 admin.site.empty_value_display = 'Не задано.'
 admin.site.site_title = "Администрирование"
 admin.site.site_header = "Администрирование"

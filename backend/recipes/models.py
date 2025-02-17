@@ -64,6 +64,7 @@ class Ingredient(NameModel):
     class Meta:
         verbose_name = 'Ингридиент'
         verbose_name_plural = 'Ингридиенты'
+        ordering = ('name',)
 
 
 class Tag(NameModel):
@@ -72,6 +73,7 @@ class Tag(NameModel):
     class Meta:
         verbose_name = 'Тэг'
         verbose_name_plural = 'Тэги'
+        ordering = ('slug',)
 
 
 class Recipe(NameModel):
@@ -124,6 +126,7 @@ class Subscribe(models.Model):
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+        ordering = ('-id',)
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'follower'], name='user-follower'),

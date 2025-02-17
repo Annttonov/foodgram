@@ -61,7 +61,7 @@ class SubscribeSerializer(SpecialUserSerializer):
     def paginate_recipes(self, obj):
         request = self.context.get('request')
         paginator = SubscriptionsRecipesPaginator()
-        page = paginator.paginate_queryset(obj.recipes.all(),
+        page = paginator.paginate_queryset(obj.recipes.all().order_by('-id'),
                                            request)
         serializer = ShortRecipeSerializer(page, many=True)
         return serializer.data
