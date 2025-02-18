@@ -1,12 +1,11 @@
 import base64
 
 import pytest
+from django.core.files.base import ContentFile
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
-from django.core.files.base import ContentFile
 
-
-from recipes.models import Ingredient, Tag, Recipe
+from recipes.models import Ingredient, Recipe, Tag
 
 
 @pytest.fixture

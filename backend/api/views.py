@@ -65,7 +65,9 @@ class SpecialUserViewSet(UserViewSet):
 
     @action(
         detail=True,
-        methods=['delete', 'put',],
+        methods=[
+            'delete',
+            'put',],
         permission_classes=(CurrentUserOrAdminOrReadOnly,)
     )
     def avatar(self, request, *args, **kwargs):
