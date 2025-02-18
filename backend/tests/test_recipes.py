@@ -230,9 +230,10 @@ class TestFavoriteAndShoppingCart:
             (pytest.lazy_fixture("anonymus_client"), HTTPStatus.UNAUTHORIZED),
         ],
     )
-    def test_download_shopping_cart(self, user_client,
+    def test_download_shopping_cart(self,
                                     client_fixture, expected_status, user):
-        InShoppingCart.objects.create(user=user, recipe_id=1)
+        recipe = Recipe.objects.get(author=user)
+        InShoppingCart.objects.create(user=user, recipe=recipe)
         response = client_fixture.get(
             f'{URL_TEMPLATE}/download_shopping_cart/')
         assert response.status_code == expected_status
