@@ -26,7 +26,7 @@ def object_create(data, model, related_model: dict = None):
 
 
 def parse_file_and_create_models(file, model, related_model=None):
-    path = os.path.abspath(fr'../data/{file}')
+    path = os.path.abspath(fr'./{file}')
     with open(file=path, mode='r', encoding='utf-8',) as f:
         reader = csv.reader(f)
         for unparsed_data in reader:

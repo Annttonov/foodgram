@@ -141,3 +141,5 @@ dmypy.json
 
 static/
 media/
+foodgram_media/
+backend_static/
