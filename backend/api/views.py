@@ -1,4 +1,5 @@
 import csv
+import os
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
@@ -65,7 +66,9 @@ class SpecialUserViewSet(UserViewSet):
 
     @action(
         detail=True,
-        methods=['delete', 'put',],
+        methods=[
+            'delete',
+            'put',],
         permission_classes=(CurrentUserOrAdminOrReadOnly,)
     )
     def avatar(self, request, *args, **kwargs):
@@ -247,7 +250,8 @@ class RecipeViewSet(ModelViewSet):
                 rows[str(id)][-1] += ingredient[-1]
             else:
                 rows[str(id)] = ingredient
-        with open('foodgram_media/shopping_cart.csv', 'w',
+        os.makedirs('foodgram_media/shopping_cart', exist_ok=True)
+        with open('foodgram_media/shopping_cart/shopping_cart.csv', 'w',
                   newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             header = ('id', 'ingredient_name', 'measurement_unit', 'amount')
@@ -255,7 +259,7 @@ class RecipeViewSet(ModelViewSet):
             for row in rows.values():
                 writer.writerow(row)
         return FileResponse(
-            open('foodgram_media/shopping_cart.csv', 'rb'),
+            open('foodgram_media/shopping_cart/shopping_cart.csv', 'rb'),
             as_attachment=True,
             filename='shopping_cart.csv'
         )

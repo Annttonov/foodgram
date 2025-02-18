@@ -1,8 +1,11 @@
+import base64
+
 import pytest
+from django.core.files.base import ContentFile
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
-from recipes.models import Ingredient, Tag
+from recipes.models import Ingredient, Recipe, Tag
 
 
 @pytest.fixture
@@ -139,3 +142,45 @@ def create_tags():
     for item in tags_data:
         tags = Tag(**item)
         tags.save()
+
+
+def decode(data):
+    format, imgstr = data.split(';base64,')
+    ext = format.split('/')[-1]
+
+    return ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+
+
+@pytest.fixture
+def create_recipe(user, create_tags, create_ingredients):
+    data = {
+        "name": "Test Recipe",
+        "ingredients": [
+            {
+                "id": Ingredient.objects.all().first().id,
+                "amount": 100
+            }
+        ],
+        "tags": [
+            Tag.objects.all().first().id
+        ],
+        "text": "Test description",
+        "cooking_time": 30,
+        "image": decode(
+            "data:image/png;base64,iVBORw0KGgoAAAA"
+            + "NSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/"
+            + "S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAA"
+            + "ggCByxOyYQAAAABJRU5ErkJggg==")
+    }
+    ingredients = data.pop('ingredients')
+    tags = data.pop('tags')
+    recipe = Recipe(**data)
+    recipe.author = user
+    recipe.save()
+    for tag in tags:
+        recipe.tags.add(tag)
+    for ingredient in ingredients:
+        recipe.ingredients.add(
+            ingredient['id'],
+            through_defaults={'amount': ingredient['amount']}
+        )
