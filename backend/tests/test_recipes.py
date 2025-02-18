@@ -218,7 +218,7 @@ class TestFavoriteAndShoppingCart:
             self, client_fixture, expected_status, model, url, user):
         recipe = Recipe.objects.get(author=user)
         model.objects.create(user=user, recipe=recipe)
-        response = client_fixture.delete(f'{URL_TEMPLATE}/1/{url}/')
+        response = client_fixture.delete(f'{URL_TEMPLATE}/{recipe.id}/{url}/')
         count_objects = 1 if expected_status == HTTPStatus.UNAUTHORIZED else 0
         assert response.status_code == expected_status
         assert model.objects.all().count() == count_objects
