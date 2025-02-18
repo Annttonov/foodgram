@@ -1,5 +1,7 @@
 SHORT_TITLE = 40
 
+SHORT_NAME = 25
+
 STANDART_FIELD_LENGTH = 64
 
 INVALID_NAMES = {'tags', 'tag', 'ingredients', 'ingredient', 'recipe',

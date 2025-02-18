@@ -6,6 +6,14 @@ BOOLEAN_CHOICES = (('0', 'False'), ('1', 'True'),)
 
 
 class RecipeFilter(filters.FilterSet):
+    """Фильтрующий класс для рецептов.
+
+    tags - фильтрация по тэгам
+    author - фильтрация по автору
+    is_favorited - фильтрация по избранному
+    is_in_shopping_cart - фильтрация по списку покупок
+    """
+
     tags = filters.ModelMultipleChoiceFilter(field_name='tags__slug',
                                              queryset=Tag.objects.all(),
                                              to_field_name='slug',)
@@ -25,6 +33,11 @@ class RecipeFilter(filters.FilterSet):
 
 
 class IngredientFilter(filters.FilterSet):
+    """фильтрующий класс для ингредиентов
+
+    name - фильтрация по названию ингредиента, чувствителен к регистру.
+    """
+
     name = filters.CharFilter(lookup_expr='istartswith')
 
     class Meta:

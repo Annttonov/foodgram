@@ -6,6 +6,8 @@ from .validators import name_validator, username_validator
 
 
 class User(AbstractUser):
+    """Кастомная модель пользователя."""
+
     email = models.EmailField(unique=True,
                               verbose_name='Эл. почта')
     username = models.CharField(max_length=STANDART_FIELD_LENGTH,
@@ -33,6 +35,8 @@ class User(AbstractUser):
 
 
 class NameModel(models.Model):
+    """Абстрактная модель для общего поля name и сортировки"""
+
     name = models.CharField(max_length=STANDART_FIELD_LENGTH,
                             verbose_name='Наименование', db_index=True,
                             validators=[
@@ -48,6 +52,8 @@ class NameModel(models.Model):
 
 
 class RecipeForeignModel(models.Model):
+    """Абстрактная реляционная модель к Recipe"""
+
     recipe = models.ForeignKey(
         'Recipe',
         on_delete=models.CASCADE,
@@ -62,6 +68,8 @@ class RecipeForeignModel(models.Model):
 
 
 class Ingredient(NameModel):
+    """Модель ингредиента"""
+
     measurement_unit = models.CharField(max_length=STANDART_FIELD_LENGTH,
                                         verbose_name='Еденица измерения')
 
@@ -72,6 +80,8 @@ class Ingredient(NameModel):
 
 
 class Tag(NameModel):
+    """Модель тэга"""
+
     slug = models.SlugField(unique=True)
 
     class Meta:
@@ -81,6 +91,8 @@ class Tag(NameModel):
 
 
 class Recipe(NameModel):
+    """Модель рецепта"""
+
     tags = models.ManyToManyField(
         Tag,
         related_name='recipes',
@@ -112,6 +124,8 @@ class Recipe(NameModel):
 
 
 class Subscribe(models.Model):
+    """Реляционная модель Подписок (User to User)"""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -142,6 +156,8 @@ class Subscribe(models.Model):
 
 
 class InShoppingCart(RecipeForeignModel):
+    """Реляционная модель списка покупок (User to Recipe)"""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -162,6 +178,8 @@ class InShoppingCart(RecipeForeignModel):
 
 
 class Favorites(RecipeForeignModel):
+    """Реляционная модель списка избранного (User to Recipe)"""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -179,6 +197,8 @@ class Favorites(RecipeForeignModel):
 
 
 class IngredientRecipe(models.Model):
+    """Реляционная модель списка ингредиентов рецепта (Ingredient to Recipe)"""
+
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,

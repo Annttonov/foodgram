@@ -5,7 +5,7 @@ from django.contrib.auth.models import Group
 from django.db.models import Count, F
 from rest_framework.authtoken.models import TokenProxy
 
-from .constants import SHORT_TITLE
+from .constants import SHORT_NAME, SHORT_TITLE
 from .models import (Favorites, Ingredient, IngredientRecipe, InShoppingCart,
                      Recipe, Subscribe, Tag)
 
@@ -13,14 +13,31 @@ User = get_user_model()
 
 
 class CustomModelAdmin(admin.ModelAdmin):
+    """Аобстрактный класс."""
+
     search_fields = ('name',)
     ordering = ('name',)
 
     @admin.display(description='Наименование')
     def short_name(self, obj):
-        if len(obj.name) <= 25:
-            return f'{obj.name[:25]}...'
+        if len(obj.name) <= SHORT_NAME:
+            return f'{obj.name[:SHORT_NAME]}...'
         return obj.name
+
+    def has_module_permission(self, request):
+        return request.user.is_staff or request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_staff or request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_staff or request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_staff or request.user.is_superuser
+
+    def has_add_permission(self, request):
+        return request.user.is_staff or request.user.is_superuser
 
 
 class IngredientInLine(admin.StackedInline):
@@ -53,6 +70,12 @@ class UserAdmin(BaseUserAdmin):
         InShoppingCartInLine,
         SubscribeInLine,
     )
+
+    def has_module_permission(self, request):
+        return request.user.is_staff or request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_staff or request.user.is_superuser
 
 
 @admin.register(Recipe)
@@ -99,6 +122,7 @@ class TagAdmin(CustomModelAdmin):
 
 
 def has_permission(request):
+    """Определяет возможность войти в админ зону"""
     return (request.user.is_active
             and (request.user.is_staff
                  or request.user.is_superuser))

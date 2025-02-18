@@ -27,6 +27,8 @@ User = get_user_model()
 
 
 class IngredientViewSet(ReadOnlyModelViewSet):
+    """Вьюсет для модели Ingredient."""
+
     serializer_class = serializers.IngredientSerializer
     queryset = models.Ingredient.objects.all()
     filter_backends = (DjangoFilterBackend,)
@@ -35,12 +37,16 @@ class IngredientViewSet(ReadOnlyModelViewSet):
 
 
 class TagViewSet(ReadOnlyModelViewSet):
+    """Вьюсет для модели Tag."""
+
     serializer_class = serializers.TagSerializer
     queryset = models.Tag.objects.all()
     permission_classes = (permissions.AllowAny,)
 
 
 class SpecialUserViewSet(UserViewSet):
+    """Вьюсет для модели User."""
+
     pagination_class = PageNumberCustomPaginator
     queryset = User.objects.all().order_by('username')
 
@@ -62,6 +68,8 @@ class SpecialUserViewSet(UserViewSet):
         return queryset
 
     def get_current_user(self, *args, **kwargs):
+        """Получение объекта текущего пользователя"""
+
         return get_object_or_404(User, username=self.request.user.username)
 
     @action(
@@ -73,6 +81,8 @@ class SpecialUserViewSet(UserViewSet):
         permission_classes=(CurrentUserOrAdminOrReadOnly,)
     )
     def avatar(self, request, *args, **kwargs):
+        """Добавление и удаление Аватара пользователя"""
+
         user = self.get_current_user()
         if request.method == 'PUT':
             avatar = {
@@ -99,6 +109,8 @@ class SpecialUserViewSet(UserViewSet):
             permission_classes=(
         permissions.IsAuthenticatedOrReadOnly,))
     def subscriptions(self, request, *args, **kwargs):
+        """Получение списка подписок пользователя"""
+
         user = self.get_current_user()
         followers = user.followers.all()
         queryset = self.get_queryset().filter(
@@ -117,6 +129,8 @@ class SpecialUserViewSet(UserViewSet):
         permissions.IsAuthenticatedOrReadOnly,))
     @permission_classes([permissions.IsAuthenticated])
     def subscribe(self, request, *args, **kwargs):
+        """Подписаться на пользвателя"""
+
         obj = self.get_object()
         user = self.get_current_user()
         if request.method == 'POST':
@@ -154,6 +168,8 @@ class SpecialUserViewSet(UserViewSet):
 
 
 class RecipeViewSet(ModelViewSet):
+    """Вьюсет для модели Recipe."""
+
     queryset = models.Recipe.objects.prefetch_related(
         'ingredientrecipe_set', 'tags', 'ingredientrecipe_set__ingredient'
     ).select_related('author').order_by('-pk')
@@ -187,21 +203,29 @@ class RecipeViewSet(ModelViewSet):
             permission_classes=(
         permissions.IsAuthenticatedOrReadOnly,))
     def favorite(self, request, *args, **kwargs):
+        """Добавление в избранное"""
+
         return self.create_or_delete(request,
                                      models.Favorites,
-                                     'список избранного',
                                      *args, **kwargs)
 
     @action(methods=['post', 'delete'], detail=True,
             permission_classes=(
         permissions.IsAuthenticatedOrReadOnly,))
     def shopping_cart(self, request, *args, **kwargs):
+        """Добавление в список покупок"""
+
         return self.create_or_delete(request,
                                      models.InShoppingCart,
-                                     'список покупок',
                                      *args, **kwargs)
 
-    def create_or_delete(self, request, Model, list_name, *args, **kwargs):
+    def create_or_delete(self, request, Model, *args, **kwargs):
+        """Метод создания и удаления обЪекта.
+
+        Принмает 2 обязательных аргумента:
+        request - объект запроса
+        Model - Модель, объект которой требуется создать или удалить
+        """
         recipe = self.get_object()
         user = request.user
         self.check_object_permissions(request, recipe)
@@ -221,7 +245,7 @@ class RecipeViewSet(ModelViewSet):
                 status=status.HTTP_201_CREATED)
         if not Model.objects.filter(recipe=recipe,
                                     user=user).exists():
-            raise ValidationError(f'Такой рецепт не добавлен в {list_name}')
+            raise ValidationError('Такой рецепт не добавлен в список')
         obj = get_object_or_404(
             Model,
             recipe=recipe,
@@ -234,6 +258,8 @@ class RecipeViewSet(ModelViewSet):
             permission_classes=(
         permissions.IsAuthenticated,))
     def download_shopping_cart(self, request, *args, **kwargs):
+        """Формирует и возвращает объект для скачивания."""
+
         self.check_permissions(request)
         ingredients = models.InShoppingCart.objects.filter(
             user=request.user).select_related(
@@ -269,6 +295,8 @@ class RecipeViewSet(ModelViewSet):
             permission_classes=[permissions.AllowAny],
             url_path='get-link')
     def get_link(self, request, *args, **kwargs):
+        """Формируте и отдает URL рецепта"""
+
         url = self.request.get_raw_uri().split('/')
         url.pop(-2)
         url.pop(-4)

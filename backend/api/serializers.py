@@ -28,6 +28,7 @@ class Base64ImageField(serializers.ImageField):
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для рецептов, с коротким телом ответа"""
 
     class Meta:
         model = Recipe
@@ -36,6 +37,8 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
 
 
 class SpecialUserSerializer(UserSerializer):
+    """Сериализатор для объекта пользователя"""
+
     avatar = Base64ImageField(required=False, allow_null=True)
     is_subscribed = serializers.BooleanField(required=False,
                                              default=False)
@@ -55,10 +58,13 @@ class SpecialUserSerializer(UserSerializer):
 
 
 class SubscribeSerializer(SpecialUserSerializer):
+    """Сериализатор для системы подписок"""
+
     recipes = serializers.SerializerMethodField('paginate_recipes')
     recipes_count = serializers.IntegerField()
 
     def paginate_recipes(self, obj):
+        """добавляет пагинацию для списка рецептов"""
         request = self.context.get('request')
         paginator = SubscriptionsRecipesPaginator()
         page = paginator.paginate_queryset(obj.recipes.all().order_by('-id'),
@@ -74,12 +80,16 @@ class SubscribeSerializer(SpecialUserSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор для ингредиентов"""
+
     class Meta:
         model = Ingredient
         fields = '__all__'
 
 
 class TagSerializer(serializers.ModelSerializer):
+    """Сериализатор для тэгов"""
+
     class Meta:
         model = Tag
         fields = '__all__'
@@ -89,6 +99,8 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class SpecialIngredientSerializer(serializers.ModelSerializer):
+    """специализированый сериализатор для ингредиентов в рецепте"""
+
     id = serializers.IntegerField(source='ingredient.id')
     name = serializers.StringRelatedField(source='ingredient.name')
     measurement_unit = serializers.StringRelatedField(
@@ -103,6 +115,8 @@ class SpecialIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для рецептов"""
+
     author = SpecialUserSerializer(read_only=True)
     ingredients = SpecialIngredientSerializer(many=True,
                                               source='ingredientrecipe_set')
@@ -127,9 +141,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         ]
 
     def get_request(self):
+        """Получение объекта запроса"""
         return self.context.get('request')
 
     def create(self, validated_data):
+        """Создание рецепта"""
         request = self.get_request()
         tags_data = validated_data.pop('tags')
         ingredients_data = validated_data.pop('ingredientrecipe_set')
@@ -146,6 +162,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
+        """Обновление рецепта"""
         instance.name = validated_data.get('name', instance.name)
         instance.text = validated_data.get('text', instance.text)
         instance.image = validated_data.get('image', instance.image)
@@ -164,6 +181,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         return instance
 
     def validate(self, attrs):
+        """Валидация данных"""
         ingredients = attrs.get('ingredientrecipe_set', None)
         tags = attrs.get('tags', None)
         cooking_time = attrs.get('cooking_time', None)
