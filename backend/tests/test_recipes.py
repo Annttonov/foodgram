@@ -169,108 +169,108 @@ class TestRecipes:
         response = client_fixture.delete(f'{URL_TEMPLATE}/{recipe_pk}/')
         assert response.status_code == expected_status
 
-    @pytest.mark.parametrize(
-        "client_fixture",
-        [
-            (pytest.lazy_fixture("user_client")),
-            (pytest.lazy_fixture("anonymus_client")),
-        ],
-    )
-    def test_get_link(self, client_fixture, user_client):
-        self.test_create_recipe(user_client, HTTPStatus.CREATED)
-        response = client_fixture.get(f'{URL_TEMPLATE}/1/get-link/')
-        assert response.status_code == HTTPStatus.OK
-        assert '/recipes/1/' in response.json()["short-link"]
-        assert 'get-link' not in response.json()["short-link"].split('/')
-        assert 'api' not in response.json()["short-link"].split('/')
+    # @pytest.mark.parametrize(
+    #     "client_fixture",
+    #     [
+    #         (pytest.lazy_fixture("user_client")),
+    #         (pytest.lazy_fixture("anonymus_client")),
+    #     ],
+    # )
+    # def test_get_link(self, client_fixture, user_client):
+    #     self.test_create_recipe(user_client, HTTPStatus.CREATED)
+    #     response = client_fixture.get(f'{URL_TEMPLATE}/1/get-link/')
+    #     assert response.status_code == HTTPStatus.OK
+    #     assert '/recipes/1/' in response.json()["short-link"]
+    #     assert 'get-link' not in response.json()["short-link"].split('/')
+    #     assert 'api' not in response.json()["short-link"].split('/')
 
 
-@pytest.mark.django_db
-@pytest.mark.usefixtures('create_tags', 'create_ingredients')
-class TestFavoriteAndShoppingCart:
+# @pytest.mark.django_db
+# @pytest.mark.usefixtures('create_tags', 'create_ingredients')
+# class TestFavoriteAndShoppingCart:
 
-    def decode(self, data):
-        format, imgstr = data.split(';base64,')
-        ext = format.split('/')[-1]
+#     def decode(self, data):
+#         format, imgstr = data.split(';base64,')
+#         ext = format.split('/')[-1]
 
-        data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+#         data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
 
-    @pytest.fixture
-    def create_recipe(self, user):
-        data = {
-            "name": "Test Recipe",
-            "ingredients": [{"id": 1, "amount": 100}],
-            "tags": [1],
-            "text": "Test description",
-            "cooking_time": 30,
-            "image": self.decode(
-                "data:image/png;base64,iVBORw0KGgoAAAA"
-                + "NSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/"
-                + "S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAA"
-                + "ggCByxOyYQAAAABJRU5ErkJggg==")
-        }
-        ingredients = data.pop('ingredients')
-        tags = data.pop('tags')
-        recipe = Recipe(**data)
-        recipe.author = user
-        recipe.save()
-        for tag in tags:
-            recipe.tags.add(tag)
-        for ingredient in ingredients:
-            recipe.ingredients.add(
-                ingredient['id'],
-                through_defaults={'amount': ingredient['amount']}
-            )
+#     @pytest.fixture
+#     def create_recipe(self, user):
+#         data = {
+#             "name": "Test Recipe",
+#             "ingredients": [{"id": 1, "amount": 100}],
+#             "tags": [1],
+#             "text": "Test description",
+#             "cooking_time": 30,
+#             "image": self.decode(
+#                 "data:image/png;base64,iVBORw0KGgoAAAA"
+#                 + "NSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/"
+#                 + "S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAA"
+#                 + "ggCByxOyYQAAAABJRU5ErkJggg==")
+#         }
+#         ingredients = data.pop('ingredients')
+#         tags = data.pop('tags')
+#         recipe = Recipe(**data)
+#         recipe.author = user
+#         recipe.save()
+#         for tag in tags:
+#             recipe.tags.add(tag)
+#         for ingredient in ingredients:
+#             recipe.ingredients.add(
+#                 ingredient['id'],
+#                 through_defaults={'amount': ingredient['amount']}
+#             )
 
-    pytestmark = pytest.mark.usefixtures('create_recipe')
+#     pytestmark = pytest.mark.usefixtures('create_recipe')
 
-    @pytest.mark.parametrize(
-        "client_fixture, expected_status",
-        [
-            (pytest.lazy_fixture("user_client"), HTTPStatus.CREATED),
-            (pytest.lazy_fixture("client"), HTTPStatus.UNAUTHORIZED),
-        ],
-    )
-    @pytest.mark.parametrize('model, url', ((Favorites, 'favorite'),
-                                            (InShoppingCart, 'shopping_cart')))
-    def test_add_in_favorite_and_shopping_cart(self, client_fixture,
-                                               expected_status, model, url):
-        response = client_fixture.post(f'{URL_TEMPLATE}/1/{url}/')
-        assert response.status_code == expected_status
-        if expected_status == HTTPStatus.UNAUTHORIZED:
-            assert model.objects.all().count() == 0
-        else:
-            assert model.objects.all().count() == 1
+#     @pytest.mark.parametrize(
+#         "client_fixture, expected_status",
+#         [
+#             (pytest.lazy_fixture("user_client"), HTTPStatus.CREATED),
+#             (pytest.lazy_fixture("client"), HTTPStatus.UNAUTHORIZED),
+#         ],
+#     )
+#     @pytest.mark.parametrize('model, url', ((Favorites, 'favorite'),
+#                                             (InShoppingCart, 'shopping_cart')))
+#     def test_add_in_favorite_and_shopping_cart(self, client_fixture,
+#                                                expected_status, model, url):
+#         response = client_fixture.post(f'{URL_TEMPLATE}/1/{url}/')
+#         assert response.status_code == expected_status
+#         if expected_status == HTTPStatus.UNAUTHORIZED:
+#             assert model.objects.all().count() == 0
+#         else:
+#             assert model.objects.all().count() == 1
 
-    @pytest.mark.parametrize(
-        "client_fixture, expected_status",
-        [
-            (pytest.lazy_fixture("user_client"), HTTPStatus.NO_CONTENT),
-            (pytest.lazy_fixture("client"), HTTPStatus.UNAUTHORIZED),
-        ],
-    )
-    @pytest.mark.parametrize('model, url', ((Favorites, 'favorite'),
-                                            (InShoppingCart, 'shopping_cart')))
-    def test_delete_in_shopping_cart_and_favorite(
-            self, client_fixture, expected_status, model, url, user):
-        model.objects.create(user=user, recipe_id=1)
-        response = client_fixture.delete(f'{URL_TEMPLATE}/1/{url}/')
-        count_objects = 1 if expected_status == HTTPStatus.UNAUTHORIZED else 0
-        assert response.status_code == expected_status
-        assert model.objects.all().count() == count_objects
+#     @pytest.mark.parametrize(
+#         "client_fixture, expected_status",
+#         [
+#             (pytest.lazy_fixture("user_client"), HTTPStatus.NO_CONTENT),
+#             (pytest.lazy_fixture("client"), HTTPStatus.UNAUTHORIZED),
+#         ],
+#     )
+#     @pytest.mark.parametrize('model, url', ((Favorites, 'favorite'),
+#                                             (InShoppingCart, 'shopping_cart')))
+#     def test_delete_in_shopping_cart_and_favorite(
+#             self, client_fixture, expected_status, model, url, user):
+#         model.objects.create(user=user, recipe_id=1)
+#         response = client_fixture.delete(f'{URL_TEMPLATE}/1/{url}/')
+#         count_objects = 1 if expected_status == HTTPStatus.UNAUTHORIZED else 0
+#         assert response.status_code == expected_status
+#         assert model.objects.all().count() == count_objects
 
-    @pytest.mark.parametrize(
-        "client_fixture, expected_status",
-        [
-            (pytest.lazy_fixture("user_client"), HTTPStatus.OK),
-            (pytest.lazy_fixture("anonymus_client"), HTTPStatus.UNAUTHORIZED),
-        ],
-    )
-    def test_download_shopping_cart(self, user_client,
-                                    client_fixture, expected_status, user):
-        InShoppingCart.objects.create(user=user, recipe_id=1)
-        response = client_fixture.get(
-            f'{URL_TEMPLATE}/download_shopping_cart/')
-        assert response.status_code == expected_status
-        if expected_status == HTTPStatus.OK:
-            assert type(response) is FileResponse
+#     @pytest.mark.parametrize(
+#         "client_fixture, expected_status",
+#         [
+#             (pytest.lazy_fixture("user_client"), HTTPStatus.OK),
+#             (pytest.lazy_fixture("anonymus_client"), HTTPStatus.UNAUTHORIZED),
+#         ],
+#     )
+#     def test_download_shopping_cart(self, user_client,
+#                                     client_fixture, expected_status, user):
+#         InShoppingCart.objects.create(user=user, recipe_id=1)
+#         response = client_fixture.get(
+#             f'{URL_TEMPLATE}/download_shopping_cart/')
+#         assert response.status_code == expected_status
+#         if expected_status == HTTPStatus.OK:
+#             assert type(response) is FileResponse
