@@ -1,6 +1,8 @@
+import base64
 from http import HTTPStatus
 
 import pytest
+from django.core.files.base import ContentFile
 from django.http import FileResponse
 
 from recipes.models import Favorites, InShoppingCart, Recipe
@@ -11,6 +13,13 @@ URL_TEMPLATE = '/api/recipes'
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.usefixtures('create_tags', 'create_ingredients')
 class TestRecipes:
+
+    def decode(self, data):
+        format, imgstr = data.split(';base64,')
+        ext = format.split('/')[-1]
+
+        data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+
     data = {
         "name": "Test Recipe",
         "ingredients": [{"id": 1, "amount": 100}],
@@ -180,6 +189,12 @@ class TestRecipes:
 @pytest.mark.usefixtures('create_tags', 'create_ingredients')
 class TestFavoriteAndShoppingCart:
 
+    def decode(self, data):
+        format, imgstr = data.split(';base64,')
+        ext = format.split('/')[-1]
+
+        data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+
     @pytest.fixture
     def create_recipe(self, user):
         data = {
@@ -188,10 +203,11 @@ class TestFavoriteAndShoppingCart:
             "tags": [1],
             "text": "Test description",
             "cooking_time": 30,
-            "image": "data:image/png;base64,iVBORw0KGgoAAAA"
-            + "NSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/"
-            + "S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAA"
-            + "ggCByxOyYQAAAABJRU5ErkJggg=="
+            "image": self.decode(
+                "data:image/png;base64,iVBORw0KGgoAAAA"
+                + "NSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/"
+                + "S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAA"
+                + "ggCByxOyYQAAAABJRU5ErkJggg==")
         }
         ingredients = data.pop('ingredients')
         tags = data.pop('tags')
