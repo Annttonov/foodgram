@@ -3,15 +3,10 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class ReadOnly(BasePermission):
+    """Только для просмотра"""
+
     def has_permission(self, request, view):
         return request.method in SAFE_METHODS
-
-
-class IsAuthorOrReadOnly(BasePermission):
-    def has_object_permission(self, request, view, obj):
-        return (obj.author.id == request.user.id
-                or request.method in SAFE_METHODS
-                and request.user.is_authenticated)
 
 
 class IsAdminOrAuthorOrReadOnly(BasePermission):
@@ -34,5 +29,8 @@ class IsAdminOrAuthorOrReadOnly(BasePermission):
 
 
 class CurrentUserOrAdminOrReadOnly(permissions.CurrentUserOrAdminOrReadOnly):
+    """Изменение доступно только для объекта, изменять который может только
+    текущий пользователь или администратор иначе, только просмотр"""
+
     def has_permission(self, request, view):
         return True
