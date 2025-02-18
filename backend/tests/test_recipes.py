@@ -133,7 +133,7 @@ class TestRecipes:
                                                     'slug': 'breakfest'},
                                                    {'id': 1,
                                                     'name': 'обед',
-                                                    'slug': 'dinner'},]
+                                                    'slug': 'dinner'}, ]
             assert response.json().get('ingredients') == [
                 {
                     'id': 1,

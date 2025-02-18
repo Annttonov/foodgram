@@ -10,7 +10,7 @@ class User(AbstractUser):
                               verbose_name='Эл. почта')
     username = models.CharField(max_length=STANDART_FIELD_LENGTH,
                                 verbose_name='Никнейм', unique=True,
-                                validators=[username_validator,])
+                                validators=[username_validator, ])
     first_name = models.CharField(max_length=STANDART_FIELD_LENGTH,
                                   verbose_name='Имя')
     last_name = models.CharField(max_length=STANDART_FIELD_LENGTH,
@@ -33,7 +33,7 @@ class User(AbstractUser):
 class NameModel(models.Model):
     name = models.CharField(max_length=STANDART_FIELD_LENGTH,
                             verbose_name='Наименование', db_index=True,
-                            validators=[name_validator,])
+                            validators=[name_validator, ])
 
     class Meta:
         abstract = True
