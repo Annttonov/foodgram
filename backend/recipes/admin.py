@@ -59,7 +59,9 @@ class UserAdmin(BaseUserAdmin):
 class RecipeAdmin(CustomModelAdmin):
     list_display = ('id', 'name', 'short_text', 'author',)
     search_fields = ('author', 'name',)
-    readonly_fields = ['count_in_favorite', ]
+    readonly_fields = [
+        'count_in_favorite',
+    ]
     ordering = ('-id',)
     inlines = (
         IngredientInLine,

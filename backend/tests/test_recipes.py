@@ -128,12 +128,18 @@ class TestRecipes:
         assert response.status_code == expected_status
         if expected_status != HTTPStatus.UNAUTHORIZED:
             assert response.json().get('text') == "New test description"
-            assert response.json().get('tags') == [{'id': 2,
-                                                    'name': 'завтрак',
-                                                    'slug': 'breakfest'},
-                                                   {'id': 1,
-                                                    'name': 'обед',
-                                                    'slug': 'dinner'}, ]
+            assert response.json().get('tags') == [
+                {
+                    'id': 2,
+                    'name': 'завтрак',
+                    'slug': 'breakfest'
+                },
+                {
+                    'id': 1,
+                    'name': 'обед',
+                    'slug': 'dinner'
+                },
+            ]
             assert response.json().get('ingredients') == [
                 {
                     'id': 1,
