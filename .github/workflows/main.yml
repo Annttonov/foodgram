@@ -39,7 +39,8 @@ jobs:
           DJANGO_ALLOWED_HOSTS: ${{  secrets.ALLOWED_HOSTS  }}
           DJANGO_SECRET_KEY: ${{  secrets.SECRET_KEY  }}
         run: |
-          python -m flake8
+          cd backend
+          flake8
           pytest
   build_backend_and_push_to_docker_hub:
     if: github.ref == 'refs/heads/main'
@@ -75,7 +76,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd frontend/
-          npm ci
+          npm install --force
 
       # - name: Test frontend
       #   run: |
