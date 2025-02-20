@@ -38,7 +38,8 @@ class User(AbstractUser):
 
 
 class NameModel(models.Model):
-    """Абстрактная модель для общего поля name и сортировки"""
+    """Абстрактная модель для
+    общего поля name и сортировки."""
 
     name = models.CharField(max_length=STANDART_FIELD_LENGTH,
                             verbose_name='Наименование', db_index=True,
@@ -55,7 +56,7 @@ class NameModel(models.Model):
 
 
 class RecipeForeignModel(models.Model):
-    """Абстрактная реляционная модель к Recipe"""
+    """Абстрактная реляционная модель к Recipe."""
 
     recipe = models.ForeignKey(
         'Recipe',
@@ -77,7 +78,7 @@ class RecipeForeignModel(models.Model):
 
 
 class UserForeigndModel(models.Model):
-    """Абстрактная реляционная модель к User"""
+    """Абстрактная реляционная модель к User."""
 
     user = models.ForeignKey(
         User,
@@ -109,7 +110,7 @@ class Ingredient(NameModel):
 
 
 class Tag(NameModel):
-    """Модель тэга"""
+    """Модель тэга."""
 
     slug = models.SlugField(unique=True)
 
@@ -120,7 +121,7 @@ class Tag(NameModel):
 
 
 class Recipe(NameModel):
-    """Модель рецепта"""
+    """Модель рецепта."""
 
     tags = models.ManyToManyField(
         Tag,
@@ -154,7 +155,7 @@ class Recipe(NameModel):
 
 
 class Subscribe(UserForeigndModel):
-    """Реляционная модель Подписок (User to User)"""
+    """Реляционная модель Подписок (User to User)."""
 
     follower = models.ForeignKey(
         User,
@@ -182,7 +183,7 @@ class Subscribe(UserForeigndModel):
 
 
 class InShoppingCart(RecipeForeignModel, UserForeigndModel):
-    """Реляционная модель списка покупок (User to Recipe)"""
+    """Реляционная модель списка покупок (User to Recipe)."""
 
     class Meta:
         verbose_name = 'Список рецептов пользователя'
@@ -194,7 +195,7 @@ class InShoppingCart(RecipeForeignModel, UserForeigndModel):
 
 
 class Favorites(RecipeForeignModel, UserForeigndModel):
-    """Реляционная модель списка избранного (User to Recipe)"""
+    """Реляционная модель списка избранного (User to Recipe)."""
 
     class Meta:
         verbose_name = 'Избранное'
