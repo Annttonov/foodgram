@@ -3,9 +3,9 @@ import os
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-from django.db import IntegrityError
-from django.db.models import Count, Exists, OuterRef, Subquery, Value
+from django.db.models import Count, Exists, OuterRef, Subquery
 from django.http import FileResponse
+from django.http.response import Http404
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.permissions import CurrentUserOrAdminOrReadOnly
@@ -68,7 +68,7 @@ class SpecialUserViewSet(UserViewSet):
         return queryset
 
     def get_current_user(self, *args, **kwargs):
-        """Получение объекта текущего пользователя"""
+        """Получение объекта текущего пользователя."""
 
         return get_object_or_404(User, username=self.request.user.username)
 
@@ -81,7 +81,7 @@ class SpecialUserViewSet(UserViewSet):
         permission_classes=(CurrentUserOrAdminOrReadOnly,)
     )
     def avatar(self, request, *args, **kwargs):
-        """Добавление и удаление Аватара пользователя"""
+        """Добавление и удаление Аватара пользователя."""
 
         user = self.get_current_user()
         if request.method == 'PUT':
@@ -109,10 +109,10 @@ class SpecialUserViewSet(UserViewSet):
             permission_classes=(
         permissions.IsAuthenticatedOrReadOnly,))
     def subscriptions(self, request, *args, **kwargs):
-        """Получение списка подписок пользователя"""
+        """Получение списка подписок пользователя."""
 
         user = self.get_current_user()
-        followers = user.followers.all()
+        followers = user.subscribe.all()
         queryset = self.get_queryset().filter(
             username__in=list(followers)).order_by('username')
         page = self.paginate_queryset(queryset)
@@ -129,41 +129,24 @@ class SpecialUserViewSet(UserViewSet):
         permissions.IsAuthenticatedOrReadOnly,))
     @permission_classes([permissions.IsAuthenticated])
     def subscribe(self, request, *args, **kwargs):
-        """Подписаться на пользвателя"""
+        """Подписаться на пользвателя."""
 
         obj = self.get_object()
         user = self.get_current_user()
         if request.method == 'POST':
-            if obj.id == user.id:
-                raise ValidationError(
-                    'Нельзя подписасться на самого себя.'
-                )
-            try:
-                models.Subscribe.objects.create(
-                    user=user,
-                    follower=obj)
-            except IntegrityError as e:
-                if 'UNIQUE constraint failed:' in str(e):
-                    raise ValidationError(
-                        'Невозможно добвать один рецепт дважды')
-                else:
-                    raise e
-            obj.is_subscribed = True
             serializer = serializers.SubscribeSerializer(
-                obj, context={'request': request})
+                data=obj, context={'request': request})
+            serializer.is_valid(raise_exception=True)
+            serializer.save(serializer.validated_data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        if not models.Subscribe.objects.filter(
-            user=user,
-            follower=obj
-        ).exists():
+        try:
+            get_object_or_404(
+                models.Subscribe,
+                user=user,
+                follower=obj).delete()
+        except Http404:
             raise ValidationError(
-                f'Вы не подписаны на пользователя {obj.username}')
-        follower = get_object_or_404(
-            models.Subscribe,
-            user=user,
-            follower=obj
-        )
-        follower.delete()
+                f'Вы не подписаны на пользователя {obj.username}.')
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -171,7 +154,7 @@ class RecipeViewSet(ModelViewSet):
     """Вьюсет для модели Recipe."""
 
     queryset = models.Recipe.objects.prefetch_related(
-        'ingredientrecipe_set', 'tags', 'ingredientrecipe_set__ingredient'
+        'ingredientrecipe', 'tags', 'ingredientrecipe__ingredient'
     ).select_related('author').order_by('-pk')
     serializer_class = serializers.RecipeSerializer
     http_method_names = ['get', 'post', 'patch', 'delete']
@@ -180,78 +163,67 @@ class RecipeViewSet(ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
-    def get_queryset(self):
-        self.check_permissions(self.request)
-        if isinstance(self.request.user, AnonymousUser):
-            return super().get_queryset().annotate(
-                is_favorited=Value(False),
-                is_in_shopping_cart=Value(False))
-
-        queryset = super().get_queryset().annotate(
-            is_favorited=Exists(
-                Subquery(models.Favorites.objects.filter(
-                    recipe=OuterRef('pk'),
-                    user=self.request.user))),
-            is_in_shopping_cart=Exists(
-                Subquery(models.InShoppingCart.objects.filter(
-                    recipe=OuterRef('pk'),
-                    user=self.request.user))))
-
-        return queryset
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.ReadRecipeSerializer
+        return super().get_serializer_class()
 
     @action(methods=['post', 'delete'], detail=True,
             permission_classes=(
         permissions.IsAuthenticatedOrReadOnly,))
     def favorite(self, request, *args, **kwargs):
-        """Добавление в избранное"""
+        """Добавление в избранное."""
 
         return self.create_or_delete(request,
                                      models.Favorites,
+                                     serializers.FavoritesSerializer,
                                      *args, **kwargs)
 
     @action(methods=['post', 'delete'], detail=True,
             permission_classes=(
         permissions.IsAuthenticatedOrReadOnly,))
     def shopping_cart(self, request, *args, **kwargs):
-        """Добавление в список покупок"""
+        """Добавление в список покупок."""
 
         return self.create_or_delete(request,
                                      models.InShoppingCart,
+                                     serializers.InShoppingCartSerializer,
                                      *args, **kwargs)
 
-    def create_or_delete(self, request, Model, *args, **kwargs):
+    def create_or_delete(self, request, Model,
+                         serializer_class, *args, **kwargs):
         """Метод создания и удаления обЪекта.
 
-        Принмает 2 обязательных аргумента:
-        request - объект запроса
-        Model - Модель, объект которой требуется создать или удалить
+        args:
+            request: объект запроса.
+            Model: Модель, объект которой требуется создать или удалить.
+            serializer_class: ссылка на сериализатор для модели.
+
+        returns:
+            Response: объект ответа.
         """
         recipe = self.get_object()
         user = request.user
         self.check_object_permissions(request, recipe)
         if request.method == 'POST':
-            try:
-                Model.objects.create(
-                    recipe=recipe, user=user)
-            except IntegrityError as e:
-                if 'UNIQUE constraint failed:' in str(e):
-                    raise ValidationError(
-                        'Невозможно добвать один рецепт дважды')
-                else:
-                    raise e
-            serializer = serializers.ShortRecipeSerializer(recipe)
+            serializer = serializer_class(
+                data={'recipe': recipe}, context={
+                    'request': request})
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
             return Response(
                 serializer.data,
-                status=status.HTTP_201_CREATED)
-        if not Model.objects.filter(recipe=recipe,
-                                    user=user).exists():
-            raise ValidationError('Такой рецепт не добавлен в список')
-        obj = get_object_or_404(
-            Model,
-            recipe=recipe,
-            user=user
-        )
-        obj.delete()
+                status=status.HTTP_201_CREATED,
+                headers=headers)
+        try:
+            get_object_or_404(
+                Model,
+                recipe=recipe,
+                user=user
+            ).delete()
+        except Http404:
+            raise ValidationError('Такой рецепт не добавлен в список.')
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=('get',),

@@ -74,6 +74,20 @@ class TestRecipes:
         assert 'results' in response.json()
         assert response.json().get('count') == 1
 
+    @pytest.mark.parametrize(
+        "client_fixture, count",
+        [
+            (pytest.lazy_fixture("user_client"), 10),
+            (pytest.lazy_fixture("anonymus_client"), 8),
+        ],
+    )
+    def test_recipe_detail(self, client_fixture, recipe_pk, count):
+        pk = recipe_pk
+        response = client_fixture.get(f'{URL_TEMPLATE}/{pk}/')
+        assert response.status_code == HTTPStatus.OK
+        assert isinstance(response.json(), dict)
+        assert len(response.json()) == count
+
     def test_filtration(self, user, user_client):
         self.test_create_recipe(user_client, HTTPStatus.CREATED)
         response = user_client.get(f'{URL_TEMPLATE}/?tags=soups')
@@ -102,6 +116,7 @@ class TestRecipes:
         assert response.status_code == expected_status
 
         if expected_status == HTTPStatus.CREATED:
+            assert len(response.json()) == 8
             response = client_fixture.post(
                 f'{URL_TEMPLATE}/', self.invalid_data)
             assert response.status_code == HTTPStatus.BAD_REQUEST

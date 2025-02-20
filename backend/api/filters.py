@@ -19,11 +19,12 @@ class RecipeFilter(filters.FilterSet):
                                              to_field_name='slug',)
     author = filters.CharFilter(field_name='author__id')
     is_favorited = filters.BooleanFilter(
-        field_name='is_favorited', method='annotate_field_filter')
+        field_name='favorites', method='annotate_field_filter')
     is_in_shopping_cart = filters.BooleanFilter(
-        field_name='is_in_shopping_cart', method='annotate_field_filter')
+        field_name='inshoppingcart', method='annotate_field_filter')
 
     def annotate_field_filter(self, queryset, name, value):
+        print(name)
         return queryset.filter(**{str(name): bool(value)})
 
     class Meta:

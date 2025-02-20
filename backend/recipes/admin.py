@@ -12,7 +12,7 @@ from .models import (Favorites, Ingredient, IngredientRecipe, InShoppingCart,
 User = get_user_model()
 
 
-class CustomModelAdmin(admin.ModelAdmin):
+class ModelAdmin(admin.ModelAdmin):
     """Аобстрактный класс."""
 
     search_fields = ('name',)
@@ -79,7 +79,7 @@ class UserAdmin(BaseUserAdmin):
 
 
 @admin.register(Recipe)
-class RecipeAdmin(CustomModelAdmin):
+class RecipeAdmin(ModelAdmin):
     list_display = ('id', 'name', 'short_text', 'author',)
     search_fields = ('author', 'name',)
     readonly_fields = [
@@ -110,13 +110,13 @@ class RecipeAdmin(CustomModelAdmin):
 
 
 @admin.register(Ingredient)
-class IngredientAdmin(CustomModelAdmin):
+class IngredientAdmin(ModelAdmin):
     list_display = ('id', 'name', 'measurement_unit',)
     list_display_links = ('name',)
 
 
 @admin.register(Tag)
-class TagAdmin(CustomModelAdmin):
+class TagAdmin(ModelAdmin):
     list_display = ('id', 'slug', 'name',)
     list_display_links = ('slug', 'name')
 
