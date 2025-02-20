@@ -1,17 +1,17 @@
 from django_filters import rest_framework as filters
+from rest_framework.exceptions import ValidationError
 
 from recipes.models import Ingredient, Recipe, Tag
-
-BOOLEAN_CHOICES = (('0', 'False'), ('1', 'True'),)
 
 
 class RecipeFilter(filters.FilterSet):
     """Фильтрующий класс для рецептов.
 
-    tags - фильтрация по тэгам
-    author - фильтрация по автору
-    is_favorited - фильтрация по избранному
-    is_in_shopping_cart - фильтрация по списку покупок
+    params: параметры запроса, по которым фильтруются данные.
+        tags: фильтрация по тэгам
+        author: фильтрация по автору
+        is_favorited: фильтрация по избранному
+        is_in_shopping_cart: фильтрация по списку покупок
     """
 
     tags = filters.ModelMultipleChoiceFilter(field_name='tags__slug',
@@ -24,8 +24,13 @@ class RecipeFilter(filters.FilterSet):
         field_name='inshoppingcart', method='annotate_field_filter')
 
     def annotate_field_filter(self, queryset, name, value):
-        print(name)
-        return queryset.filter(**{str(name): bool(value)})
+        if self.request.user.is_anonymous:
+            raise ValidationError('Чтобы просматривать этот список список, '
+                                  + 'требуется авторизация.')
+        filter_template = {f'{name}__user': self.request.user}
+        if value:
+            return queryset.filter(**filter_template)
+        return queryset.exclude(**filter_template)
 
     class Meta:
         model = Recipe
@@ -36,7 +41,8 @@ class RecipeFilter(filters.FilterSet):
 class IngredientFilter(filters.FilterSet):
     """фильтрующий класс для ингредиентов
 
-    name - фильтрация по названию ингредиента, чувствителен к регистру.
+    params:
+        name: фильтрация по названию ингредиента, чувствителен к регистру.
     """
 
     name = filters.CharFilter(lookup_expr='istartswith')

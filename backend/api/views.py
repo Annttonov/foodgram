@@ -2,8 +2,7 @@ import csv
 import os
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AnonymousUser
-from django.db.models import Count, Exists, OuterRef, Subquery
+from django.db.models import Count
 from django.http import FileResponse
 from django.http.response import Http404
 from django.shortcuts import get_object_or_404
@@ -55,18 +54,6 @@ class SpecialUserViewSet(UserViewSet):
             return (permissions.IsAuthenticated(),)
         return super().get_permissions()
 
-    def get_queryset(self):
-        if isinstance(self.request.user, AnonymousUser):
-            return super().get_queryset()
-        queryset = super().get_queryset().annotate(
-            is_subscribed=Exists(Subquery(
-                models.Subscribe.objects.filter(
-                    user=self.request.user,
-                    follower=OuterRef('pk')
-                ))),
-            recipes_count=Count('recipes'))
-        return queryset
-
     def get_current_user(self, *args, **kwargs):
         """Получение объекта текущего пользователя."""
 
@@ -114,7 +101,9 @@ class SpecialUserViewSet(UserViewSet):
         user = self.get_current_user()
         followers = user.subscribe.all()
         queryset = self.get_queryset().filter(
-            username__in=list(followers)).order_by('username')
+            username__in=list(followers)).annotate(
+                recipes_count=Count('recipes')
+        ).order_by('username')
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = serializers.SubscribeSerializer(
@@ -132,6 +121,7 @@ class SpecialUserViewSet(UserViewSet):
         """Подписаться на пользвателя."""
 
         obj = self.get_object()
+        obj.recipes_count = obj.recipes.all().count()
         user = self.get_current_user()
         if request.method == 'POST':
             serializer = serializers.SubscribeSerializer(

@@ -52,8 +52,7 @@ class SpecialUserSerializer(UserSerializer):
     """Сериализатор для объекта пользователя"""
 
     avatar = Base64ImageField(required=False, allow_null=True)
-    is_subscribed = serializers.BooleanField(required=False,
-                                             default=False)
+    is_subscribed = serializers.BooleanField(required=False,)
 
     class Meta:
         model = User
@@ -64,7 +63,12 @@ class SpecialUserSerializer(UserSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        if representation.get('is_subscribed',) is None:
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            representation['is_subscribed'] = Subscribe.objects.filter(
+                user=user,
+                follower_id=representation['id']).exists()
+        else:
             representation['is_subscribed'] = False
         return representation
 

@@ -143,3 +143,5 @@ static/
 media/
 foodgram_media/
 backend_static/
+
+docker-compose.yml
